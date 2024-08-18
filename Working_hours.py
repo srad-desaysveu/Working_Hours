@@ -12,6 +12,19 @@ def lese_excel_datei(dateipfad):
     try:
         daten = pd.read_excel(dateipfad)
         print("Datei erfolgreich eingelesen.")
+
+        # Suchen nach dem Index der Zeile, die text enthält
+        text = "Diesen Block in jedes neue Excel Rüberkopieren"
+        # idx = daten[daten.eq(text).any()].index
+        
+        # if not idx.empty:
+        #     # Daten abschneiden, alles nach der gefundenden Zeile ignorieren
+        #     daten = daten.iloc[:idx[0]]
+
+        idx = daten.apply(lambda row: row.astype(str).str.contains(text).any(), axis=1)
+        if idx.any():
+            daten = daten.loc[:idx.idxmax()-1]
+
         return daten
     except Exception as e:
         print(f"Fehler beim Einlesen der Datei: {e}")
@@ -268,18 +281,19 @@ def summiere_ueberstunden_ueber_monate(dateipfade):
 
     for pfad in dateipfade:
         filenames = list_monatswerte_files(pfad)
-        try:
-            # Lese die Excel-Datei ein
-            daten = pd.read_excel(filenames, sheet_name=None)
-            # Suche nach dem Blatt mit dem Namen, der "_Monatswerte" enthält
-            blattname = next(name for name in daten.keys() if "_Monatswerte" in name)
-            monatliche_werte = daten[blattname]
-            
-            # Extrahiere die Überstunden aus der entsprechenden Spalte (hier angenommen als "Gesamte Überstunden (Stunden)")
-            ueberstunden = monatliche_werte["Gesamte Überstunden (Stunden)"].sum()
-            gesamtueberstunden += ueberstunden
-        except Exception as e:
-            print(f"Fehler beim Einlesen oder Verarbeiten der Datei {pfad}: {e}")
+        for file in filenames:
+            try:
+                # Lese die Excel-Datei ein
+                daten = pd.read_excel(file, sheet_name="Sheet1")
+                # # Suche nach dem Blatt mit dem Namen, der "_Monatswerte" enthält
+                # blattname = next(name for name in daten.keys() if "_Monatswerte" in name)
+                # monatliche_werte = daten[blattname]
+                
+                # Extrahiere die Überstunden aus der entsprechenden Spalte (hier angenommen als "Gesamte Überstunden (Stunden)")
+                ueberstunden = daten["Gesamte Überstunden (Stunden)"].sum()
+                gesamtueberstunden += ueberstunden
+            except Exception as e:
+                print(f"Fehler beim Einlesen oder Verarbeiten der Datei {pfad}: {e}")
 
     return gesamtueberstunden
 

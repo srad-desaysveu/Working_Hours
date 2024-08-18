@@ -18,6 +18,7 @@ from Working_hours import *
 #%%
 ########################################################################################
 filename = r"D:\Desay\01_personal_data\01_Zeitablage\2023\23_09 - Kopie.xlsx"
+filename = r"C:\Users\sradzijewski\OneDrive - DesaySV Europe\Dokumente\01_personal_data\01_Zeitablage\2023\23_09.xlsx"
 
 Urlaub_2023 = [('2023-11-06', '2023-11-10'), ('2023-12-27', '2023-12-29'), ('2023-12-21', '2023-12-22'),]
 Urlaub_2024 = [('2024-03-25', '2023-03-29'), ('2024-05-27', '2024-05-31'), ('2024-08-01', '2024-08-11'), ('2024-08-29', '2024-09-08'),]
