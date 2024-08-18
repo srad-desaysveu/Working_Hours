@@ -57,13 +57,13 @@ def berechne_arbeitszeiten(daten, sollarbeitszeit=8):
     effektive_arbeitszeit_pro_tag_cap[effektive_arbeitszeit_pro_tag_cap > 10] = 10
 
     # Berechne die Überstunden basierend auf der gesamten effektiven Arbeitszeit
-    überstunden = effektive_arbeitszeit_pro_tag_cap - sollarbeitszeit
+    überstunden_pro_tag = effektive_arbeitszeit_pro_tag_cap - sollarbeitszeit
 
     # Erstelle einen DataFrame mit den berechneten Werten
     ergebnisse = pd.DataFrame({
         'Effektive_Arbeitszeit': effektive_arbeitszeit_pro_tag,
         'Effektive_Arbeitszeit_10hCap': effektive_arbeitszeit_pro_tag_cap,
-        'Überstunden': überstunden
+        'Überstunden': überstunden_pro_tag
     })
 
     return ergebnisse
@@ -179,3 +179,124 @@ def berechne_sollarbeitszeit(dateipfad, sollarbeitszeit_pro_tag=8):
     return gesamt_sollarbeitszeit
 
 # Beispielver
+
+def berechne_gesamtueberstunden(gesamte_arbeitszeit, gesamte_sollarbeitszeit):
+    """
+    Diese Funktion berechnet die Gesamtüberstunden eines Monats basierend auf der gesamten 
+    effektiven Arbeitszeit und der Sollarbeitszeit.
+    
+    gesamte_arbeitszeit: Die gesamte effektive Arbeitszeit im Monat in Stunden.
+    gesamte_sollarbeitszeit: Die gesamte Sollarbeitszeit im Monat in Stunden.
+    
+    Rückgabe: Die Gesamtüberstunden im Monat in Stunden.
+    """
+    gesamtueberstunden = gesamte_arbeitszeit - gesamte_sollarbeitszeit
+    
+    # Gesamtüberstunden dürfen nicht negativ sein
+    if gesamtueberstunden < 0:
+        gesamtueberstunden = 0
+    
+    return gesamtueberstunden
+
+def korrigiere_sollarbeitszeit_fuer_urlaub(gesamte_sollarbeitszeit, urlaubszeiträume, dateipfad):
+    """
+    Diese Funktion korrigiert die monatliche Sollarbeitszeit basierend auf den angegebenen Urlaubstagen.
+    
+    gesamte_sollarbeitszeit: Die ursprüngliche monatliche Sollarbeitszeit in Stunden.
+    urlaubszeiträume: Eine Liste von Tuple mit Urlaubstagen (z.B. [('2023-09-10', '2023-09-15'), ('2023-09-20', '2023-09-22')])
+    dateipfad: Der Pfad zur Excel-Datei, um den Monat und das Jahr zu extrahieren.
+    
+    Rückgabe: Die angepasste Sollarbeitszeit unter Berücksichtigung der Urlaubstage.
+    """
+    # Extrahiere das Jahr und den Monat aus dem Dateinamen
+    dateiname = os.path.splitext(os.path.basename(dateipfad))[0]
+    year, month = map(int, dateiname.split('-')[0].split('_'))
+
+    # Konvertiere die Urlaubsdaten in datetime-Objekte und filtere die für den aktuellen Monat
+    urlaubstage = []
+    for start, ende in urlaubszeiträume:
+        start_date = datetime.datetime.strptime(start, '%Y-%m-%d').date()
+        end_date = datetime.datetime.strptime(ende, '%Y-%m-%d').date()
+        
+        # Nur Urlaubstage im aktuellen Monat berücksichtigen
+        if start_date.year == 2000 + year and start_date.month == month:
+            urlaubstage.extend(pd.date_range(start=start_date, end=end_date).tolist())
+        elif end_date.year == 2000 + year and end_date.month == month:
+            urlaubstage.extend(pd.date_range(start=start_date, end=end_date).tolist())
+    
+    # Generiere eine Liste aller Arbeitstage im Monat
+    start_date = datetime.date(2000 + year, month, 1)
+    if month == 12:
+        end_date = datetime.date(2000 + year + 1, 1, 1) - datetime.timedelta(days=1)
+    else:
+        end_date = datetime.date(2000 + year, month + 1, 1) - datetime.timedelta(days=1)
+    
+    all_days = pd.date_range(start=start_date, end=end_date, freq='D')
+    werktage = [day for day in all_days if day.weekday() < 5]  # Montag bis Freitag
+
+    # Zähle die Anzahl der Urlaubstage, die auf Werktage fallen
+    urlaubstage_werktage = [day for day in urlaubstage if day in werktage]
+
+    # Subtrahiere die Anzahl der Urlaubstage von den Sollarbeitstagen
+    korrigierte_sollarbeitszeit = gesamte_sollarbeitszeit - len(urlaubstage_werktage) * 8  # 8 Stunden pro Urlaubstag
+
+    return max(korrigierte_sollarbeitszeit, 0)
+
+def summiere_ueberstunden_ueber_monate(dateipfade):
+    """
+    Diese Funktion liest die Überstunden aus mehreren Excel-Dateien mit "_Monatswerte" im Namen
+    ein und summiert die Überstunden über alle Monate hinweg.
+    
+    dateipfade: Eine Liste von Pfaden zu den Excel-Dateien, die die monatlichen Überstunden enthalten.
+    
+    Rückgabe: Die gesamte Anzahl der Überstunden über alle angegebenen Monate hinweg.
+    """
+
+    def list_monatswerte_files(directory_path):
+        # List all files in the given directory
+        all_files = os.listdir(directory_path)
+        
+        # Filter files that end with "_Monatswerte.xlsx"
+        monatswerte_files = [file for file in all_files if file.endswith('_Monatswerte.xlsx')]
+        
+        # Create the full path for each file
+        monatswerte_files = [os.path.join(directory_path, file) for file in monatswerte_files]
+
+        return monatswerte_files
+    
+    gesamtueberstunden = 0
+
+    for pfad in dateipfade:
+        filenames = list_monatswerte_files(pfad)
+        try:
+            # Lese die Excel-Datei ein
+            daten = pd.read_excel(filenames, sheet_name=None)
+            # Suche nach dem Blatt mit dem Namen, der "_Monatswerte" enthält
+            blattname = next(name for name in daten.keys() if "_Monatswerte" in name)
+            monatliche_werte = daten[blattname]
+            
+            # Extrahiere die Überstunden aus der entsprechenden Spalte (hier angenommen als "Gesamte Überstunden (Stunden)")
+            ueberstunden = monatliche_werte["Gesamte Überstunden (Stunden)"].sum()
+            gesamtueberstunden += ueberstunden
+        except Exception as e:
+            print(f"Fehler beim Einlesen oder Verarbeiten der Datei {pfad}: {e}")
+
+    return gesamtueberstunden
+
+def korrigiere_gesamtueberstunden_manuell(bisherige_ueberstunden, korrekturwert):
+    """
+    Diese Funktion ermöglicht es, die Gesamtüberstunden manuell zu korrigieren, falls die berechneten Werte
+    nicht korrekt erscheinen.
+    
+    bisherige_ueberstunden: Die bisherige Summe der Überstunden in Stunden.
+    korrekturwert: Der Korrekturwert in Stunden, der zu den bisherigen Überstunden addiert oder subtrahiert wird.
+    
+    Rückgabe: Die korrigierte Anzahl der Überstunden.
+    """
+    korrigierte_ueberstunden = bisherige_ueberstunden + korrekturwert
+    
+    # Überstunden dürfen nicht negativ sein
+    if korrigierte_ueberstunden < 0:
+        korrigierte_ueberstunden = 0
+    
+    return korrigierte_ueberstunden
