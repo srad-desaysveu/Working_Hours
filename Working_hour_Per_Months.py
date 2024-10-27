@@ -3,7 +3,6 @@ import sys
 import os
 print (os.getcwd())
 sys.path.append(os.getcwd())
-import numpy as np
 
 import pandas as pd
 import numpy as np
@@ -21,17 +20,19 @@ filename = r"C:\Users\sradzijewski\OneDrive - DesaySV Europe\Dokumente\01_person
 filename = r"C:\Users\sradzijewski\OneDrive - DesaySV Europe\Dokumente\01_personal_data\01_Zeitablage\2023\23_10.xlsx"
 filename = r"C:\Users\sradzijewski\OneDrive - DesaySV Europe\Dokumente\01_personal_data\01_Zeitablage\2023\23_11.xlsx"
 filename = r"C:\Users\sradzijewski\OneDrive - DesaySV Europe\Dokumente\01_personal_data\01_Zeitablage\2023\23_12.xlsx"
+filename = r"C:\Users\stefa\OneDrive\Dokumente\04_Hobby\Programming\Working_Hours\timetables\24_01.xlsx"
 
-Urlaub_2023 = [('2023-11-06', '2023-11-10'), ('2023-12-27', '2023-12-29'), ('2023-12-21', '2023-12-22'),]
-Urlaub_2024 = [('2024-03-25', '2023-03-29'), ('2024-05-27', '2024-05-31'), ('2024-08-01', '2024-08-11'), ('2024-08-29', '2024-09-08'),]
-Krank_2024 = [('2024-01-10', '2024-01-10'),('2024-02-08', '2024-02-09'),('2024-02-12', '2024-02-14'),]
+Urlaub_2023 = [('2023-11-06', '2023-11-10'),('2023-12-27', '2023-12-29'),('2023-12-21', '2023-12-22'),]
+Urlaub_2024 = [('2024-03-25', '2023-03-29'),('2024-05-27', '2024-05-31'),('2024-08-01', '2024-08-11'),('2024-08-29', '2024-09-08'),('2024-09-20', '2024-09-20')]
+Krank_2024 = [('2024-01-10', '2024-01-10'),('2024-02-08', '2024-02-09'),('2024-02-12', '2024-02-14'),('2024-10-04', '2024-10-13')]
 
 ########################################################################################
 #%%
 ########################################################################################
 
-def main(dateipfad, Urlaub):
-    # code body here
+def main(dateipfad):
+    vacation = Urlaub_2024 # needs to be updated yearly
+
     daten = lese_excel_datei(dateipfad)
     if daten is not None:
         dateiname = os.path.splitext(os.path.basename(dateipfad))[0]
@@ -66,4 +67,4 @@ def main(dateipfad, Urlaub):
 
 if __name__ == '__main__':
     print("This only executes when %s is executed rather than imported" % __file__)
-    main(filename, Urlaub_2023)
+    main(filename)
