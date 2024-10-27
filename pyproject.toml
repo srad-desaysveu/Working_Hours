@@ -1,0 +1,12 @@
+[project]
+name = "working-hours"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "datetime>=5.5",
+    "holidays>=0.59",
+    "matplotlib>=3.9.2",
+    "pandas>=2.2.3",
+]
