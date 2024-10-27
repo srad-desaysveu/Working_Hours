@@ -287,6 +287,7 @@ dependencies = [
     { name = "datetime" },
     { name = "holidays" },
     { name = "matplotlib" },
+    { name = "numpy" },
     { name = "pandas" },
 ]
 
@@ -295,6 +296,7 @@ requires-dist = [
     { name = "datetime", specifier = ">=5.5" },
     { name = "holidays", specifier = ">=0.59" },
     { name = "matplotlib", specifier = ">=3.9.2" },
+    { name = "numpy", specifier = ">=2.1.2" },
     { name = "pandas", specifier = ">=2.2.3" },
 ]
 

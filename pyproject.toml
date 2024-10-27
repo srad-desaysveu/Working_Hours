@@ -8,5 +8,6 @@ dependencies = [
     "datetime>=5.5",
     "holidays>=0.59",
     "matplotlib>=3.9.2",
+    "numpy>=2.1.2",
     "pandas>=2.2.3",
 ]
